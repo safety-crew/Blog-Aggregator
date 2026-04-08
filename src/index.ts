@@ -1,5 +1,9 @@
 import { readConfig, setUser } from "./config.js";
-import { createUser, getUserByName } from "./db/queries/users.js";
+import {
+  createUser,
+  getUserByName,
+  deleteAllUsers,
+} from "./db/queries/users.js";
 
 // 1. Define the CommandHandler type
 type CommandHandler = (cmdName: string, ...args: string[]) => Promise<void>;
@@ -75,11 +79,22 @@ async function runCommand(
   await handler(cmdName, ...args);
 }
 
+// Add the reset handler function
+async function handlerReset(cmdName: string, ...args: string[]): Promise<void> {
+  try {
+    await deleteAllUsers();
+    console.log("Database reset successfully! All users have been deleted.");
+  } catch (error: any) {
+    throw new Error(`Failed to reset database: ${error.message}`);
+  }
+}
+
 async function main() {
   // Initialize the registry and register commands
   const commands: CommandsRegistry = {};
   registerCommand(commands, "login", handlerLogin);
   registerCommand(commands, "register", handlerRegister);
+  registerCommand(commands, "reset", handlerReset); // Add this line
 
   // process.argv contains: [nodePath, scriptPath, cmdName, ...args]
   // We slice the first two to get only the CLI input
